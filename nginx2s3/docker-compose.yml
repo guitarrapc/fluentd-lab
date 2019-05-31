@@ -27,7 +27,6 @@ services:
     image: nginx2s3-fluentd
     container_name: nginx2s3-fluentd
     volumes:
-      - "~/.aws/:/home/fluent/.aws/"
       - "./log/fluentd:/var/log/fluentd"
       - "./fluentd/fluentd.conf:/fluentd/etc/fluentd.conf"
       - "./log/nginx:/var/log/nginx"
