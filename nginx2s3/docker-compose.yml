@@ -1,0 +1,53 @@
+version: '3'
+networks:
+  credentials_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "169.254.170.0/24"
+services:
+  # This container vends credentials to your containers
+  ecs-local-endpoints:
+    # The Amazon ECS Local Container Endpoints Docker Image
+    image: amazon/amazon-ecs-local-container-endpoints
+    volumes:
+      - /var/run:/var/run
+      - ~/.aws/:/home/.aws/
+    environment:
+      HOME: "/home"
+      AWS_PROFILE: "YOUR_PROFILE"
+    networks:
+      credentials_network:
+        ipv4_address: "169.254.170.2"
+        aliases:
+          - endpoints
+  
+  fluentd:
+    build: ./fluentd
+    image: nginx2s3-fluentd
+    container_name: nginx2s3-fluentd
+    volumes:
+      - "~/.aws/:/home/fluent/.aws/"
+      - "./log/fluentd:/var/log/fluentd"
+      - "./fluentd/fluentd.conf:/fluentd/etc/fluentd.conf"
+      - "./log/nginx:/var/log/nginx"
+    environment:
+      FLUENTD_OPT: "-vv"
+      FLUENTD_CONF: "fluentd.conf"
+      AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: "/creds"
+      AWS_S3_BUCKET: YOUR_BUCKET
+      AWS_REGION: ap-northeast-1
+    depends_on:
+      - ecs-local-endpoints
+    networks:
+      credentials_network:
+        ipv4_address: "169.254.170.3"
+
+  nginx:
+    build: ./nginx
+    image: nginx2s3-nginx
+    container_name: nginx2s3-nginx
+    ports:
+      - "8081:80"
+    volumes:
+      - "./log/nginx:/var/log/nginx"
