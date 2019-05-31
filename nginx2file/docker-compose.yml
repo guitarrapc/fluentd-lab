@@ -1,0 +1,22 @@
+version: '3'
+services:
+  fluentd:
+    build: ./fluentd
+    image: nginx2file-fluentd
+    container_name: nginx2file-fluentd
+    volumes:
+      - "./log/fluentd:/var/log/fluentd"
+      - "./fluentd/fluentd.conf:/fluentd/etc/fluentd.conf"
+      - "./log/nginx:/var/log/nginx"
+    environment:
+      FLUENTD_OPT: "-vv"
+      FLUENTD_CONF: "fluentd.conf"
+
+  nginx:
+    build: ./nginx
+    image: nginx2file-nginx
+    container_name: nginx2file-nginx
+    ports:
+      - "8081:80"
+    volumes:
+      - "./log/nginx:/var/log/nginx"
